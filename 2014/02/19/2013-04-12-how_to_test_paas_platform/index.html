@@ -1,0 +1,728 @@
+
+ <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  
+    <title>如何测试pass平台 | WITWICKY</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="xiaoxiao">
+    
+    <meta name="description" content="作者：张巍 《商派电子商务云平台的回顾和反思》
+如何快速发现问题和缩小排查范围
+
+
+场景分析
+
+通过sanityCheck来解藕混合问题，方便开发、测试和运维的同事进行错误诊断
+
+1. 问题描述
+
+由于组件、关联方太多，除了问题后普通人很难调试。同时，问题也很难缩小范围。
+所以只能拉上所有相关人三堂">
+    
+    
+    
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:site" content="boponik" />
+    <meta name="twitter:title" content="如何测试pass平台 | WITWICKY" />
+      
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css" type="text/css">
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="WITWICKY" title="WITWICKY"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="WITWICKY">WITWICKY</a></h1>
+				<h2 class="blog-motto">工作的那点事</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">存档</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+					<li>
+					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="search" id="search" name="q" autocomplete="off" maxlength="20" placeholder="Search" />
+						<input type="hidden" name="q" value="site:weibo.com/370377010">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2014/02/19/2013-04-12-how_to_test_paas_platform/" title="如何测试pass平台" itemprop="url">如何测试pass平台</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://weibo.com/370377010" title="xiaoxiao">xiaoxiao</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2014-02-19T01:21:24.000Z" itemprop="datePublished">Feb 19 2014</time>
+    Updated:<time datetime="2014-02-19T01:21:24.000Z" itemprop="dateModified">Feb 19 2014</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#-"><span class="toc-number">1.</span> <span class="toc-text">如何快速发现问题和缩小排查范围</span></a></li><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#-"><span class="toc-number">1.1.</span> <span class="toc-text">场景分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-"><span class="toc-number">1.2.</span> <span class="toc-text">1. 问题描述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-"><span class="toc-number">1.3.</span> <span class="toc-text">2. 每个服务尽可能的自我检查，报告健康状态</span></a></li><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#sanitycheck-"><span class="toc-number">1.3.1.</span> <span class="toc-text">sanityCheck的难点：</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#sanitycheck-"><span class="toc-number">1.3.2.</span> <span class="toc-text">sanityCheck的主要内容：</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#sanitycheck-"><span class="toc-number">1.3.3.</span> <span class="toc-text">sanityCheck的注意事项：</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#-"><span class="toc-number">1.3.4.</span> <span class="toc-text">最重要一点：</span></a></li></ol><li class="toc-item toc-level-3"><a class="toc-link" href="#3-"><span class="toc-number">1.4.</span> <span class="toc-text">3. 通过统一规范来管理服务</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-syslog-ng-log-"><span class="toc-number">1.5.</span> <span class="toc-text">4. 服务通过向 syslog-ng 记log，就可以自动发邮件报警了</span></a></li></ol><li class="toc-item toc-level-2"><a class="toc-link" href="#-"><span class="toc-number">2.</span> <span class="toc-text">线下如何尽可能多的发现问题</span></a></li><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#-"><span class="toc-number">2.1.</span> <span class="toc-text">场景分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-"><span class="toc-number">2.2.</span> <span class="toc-text">1. 问题描述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-ecae-hudson-"><span class="toc-number">2.3.</span> <span class="toc-text">2. ECAE的Hudson任务图</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-"><span class="toc-number">2.4.</span> <span class="toc-text">3. 里程碑</span></a></li></ol><li class="toc-item toc-level-2"><a class="toc-link" href="#-"><span class="toc-number">3.</span> <span class="toc-text">充分测试后，线上还是经常会有惊喜</span></a></li><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#-"><span class="toc-number">3.1.</span> <span class="toc-text">场景分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-"><span class="toc-number">3.2.</span> <span class="toc-text">1. 问题描述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-"><span class="toc-number">3.3.</span> <span class="toc-text">2. 充足的监控</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#-"><span class="toc-number">3.4.</span> <span class="toc-text">监控的注意事项</span></a></li></ol><li class="toc-item toc-level-2"><a class="toc-link" href="#-"><span class="toc-number">4.</span> <span class="toc-text">对于无法重现的用户抱怨，该怎么办</span></a></li><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#-"><span class="toc-number">4.1.</span> <span class="toc-text">场景分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-"><span class="toc-number">4.2.</span> <span class="toc-text">1. 问题描述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-web-"><span class="toc-number">4.3.</span> <span class="toc-text">2. 基于网卡旁路监听的Web请求分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-"><span class="toc-number">4.4.</span> <span class="toc-text">3. 如何计算：服务器响应时间以及网络时间</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-"><span class="toc-number">4.5.</span> <span class="toc-text">4. 细化服务器的响应，以支持跟踪到每一个单独请求</span></a></li></ol><li class="toc-item toc-level-2"><a class="toc-link" href="#-"><span class="toc-number">5.</span> <span class="toc-text">如何针对分布式服务设计测试用例</span></a></li><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#-"><span class="toc-number">5.1.</span> <span class="toc-text">针对多实例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#-"><span class="toc-number">5.2.</span> <span class="toc-text">针对多租户</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#-"><span class="toc-number">5.3.</span> <span class="toc-text">针对多依赖</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#-"><span class="toc-number">5.4.</span> <span class="toc-text">其它</span></a></li></ol>
+		</div>
+		
+		<p>作者：张巍 <a href="http://blog.ec-ae.com/?p=6268" target="_blank">《商派电子商务云平台的回顾和反思》</a></p>
+<h2 id="-">如何快速发现问题和缩小排查范围</h2>
+<!-- sanityCheck -->
+
+<h3 id="-">场景分析</h3>
+<ul>
+<li>通过sanityCheck来解藕混合问题，方便开发、测试和运维的同事进行错误诊断</li>
+</ul>
+<h3 id="1-">1. 问题描述</h3>
+<blockquote>
+<p>由于组件、关联方太多，除了问题后普通人很难调试。同时，问题也很难缩小范围。
+所以只能拉上所有相关人三堂会诊的方式。但是这样不仅浪费时间，而且还会滋生推妥
+的负面情绪。</p>
+<p>更进一步，当故障被排除后，我们也无法判断当前系统就是完全好的、还是有些隐藏问
+题。</p>
+<p>再者，不同服务器的管理工具和调试方式经常会千差万别，总会出现 log信息缺失或内
+容混乱的情况。</p>
+<p>再次，服务自己如何主动报警，同时修改保持较低的入侵性和对主体业务的影响</p>
+</blockquote>
+<h3 id="2-">2. 每个服务尽可能的自我检查，报告健康状态</h3>
+<h4 id="sanitycheck-">sanityCheck的难点：</h4>
+<p>开发自己实现的会出现测试不完备； 异步请求和并发请求会大大提高实现的复杂度</p>
+<h4 id="sanitycheck-">sanityCheck的主要内容：</h4>
+<p>小的业务功能测试； 遍历对外接口； 依赖服务依赖检查； 模拟非法请求 等等</p>
+<h4 id="sanitycheck-">sanityCheck的注意事项：</h4>
+<p>可重入的； 对业务影响比较小； 自动初始化测试数据； 有统一的返回码</p>
+<h4 id="-">最重要一点：</h4>
+<p>sanityCheck实现代码对所有人都是可见的，靠开发、测试和运维人员来共同维护</p>
+<h3 id="3-">3. 通过统一规范来管理服务</h3>
+<ul>
+<li>每个SOA服务都遵循统一的运维管理接口</li>
+</ul>
+<div class="row">
+  <div class="span8">
+    <table class="table table-bordered table-condensed">
+      <thead>
+        <th style="width: 30%">Name</th>
+        <th style="width: 70%">Comment</th>
+      </thead>
+      <tbody>
+        <tr>
+          <td>string help()</td>
+          <td>对当前module的各功能提供帮助信息</td>
+        </tr>
+        <tr>
+          <td>int sanityCheck()</td>
+          <td>返回服务的健康状态</td>
+        </tr>
+        <tr>
+          <td>bool initSystem(Options)</td>
+          <td>初始化当前app系统，
+          例如创建db cluster, db schema, mq cluster, etc</td>
+        </tr>
+        <tr>
+          <td>bool joinSystem(Options)</td>
+          <td>初始化时，加入某个现有系统，
+          例如 join db cluster, mq cluster, etc</td>
+        </tr>
+        <tr>
+          <td>bool upgrade(Options)</td>
+          <td>进行各类升级操作；data schema升级， reload等</td>
+        </tr>
+        <tr>
+          <td>bool backup(Path)</td>
+          <td>备份数据</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<h3 id="4-syslog-ng-log-">4. 服务通过向 syslog-ng 记log，就可以自动发邮件报警了</h3>
+<h2 id="-">线下如何尽可能多的发现问题</h2>
+<!-- Hudson -->
+
+<h3 id="-">场景分析</h3>
+<ul>
+<li>使用 Hudson 做持续集成，发现尽可能多的已知问题和可遇问题</li>
+</ul>
+<h3 id="1-">1. 问题描述</h3>
+<blockquote>
+<p>加强测试可以发现问题。可是测试什么、怎么测试呢？</p>
+<p>如何定量的管理相关的测试工作，而不是日复一日的在完善，但是每次上线时都胆战心
+惊？</p>
+</blockquote>
+<h3 id="2-ecae-hudson-">2. ECAE的Hudson任务图</h3>
+<ul>
+<li>通过Hudson自动化尽可能多的已知测试和回归测试</li>
+</ul>
+<div class="row">
+  <div class="span8">
+    <table class="table table-bordered table-condensed">
+      <thead>
+        <th style="width: 30%">Item</th>
+        <th style="width: 70%">Summary</th>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Rpmbuild</td>
+          <td>源码编译没有问题</td>
+        </tr>
+        <tr>
+          <td>小集成测试</td>
+          <td>sanityCheck测试通过</td>
+        </tr>
+        <tr>
+          <td>压力测试</td>
+          <td>自动进行压力测试</td>
+        </tr>
+        <tr>
+          <td>模拟异常测试</td>
+          <td>应对机器的随机重启、网络异常等</td>
+        </tr>
+        <tr>
+          <td>dogfood</td>
+          <td>将内部wiki, blog, svn部署在线下模拟环境中</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<ul>
+<li>Hudson 任务图是一个单入单出的先序图</li>
+</ul>
+<h3 id="3-">3. 里程碑</h3>
+<div class="row">
+  <div class="span8">
+    <table class="table table-bordered table-condensed">
+      <thead>
+        <th style="width: 30%">Item</th>
+        <th style="width: 70%">Summary</th>
+      </thead>
+      <tbody>
+        <tr>
+          <td>可随机重启</td>
+          <td>确保系统没有单点故障；能应对机器突然出现的硬件故障</td>
+        </tr>
+        <tr>
+          <td>压测能持续跑6个小时以上</td>
+          <td>说明系统不存在资源没有释放的问题</td>
+        </tr>
+        <tr>
+          <td>每个人有能力独立部署</td>
+          <td>检验系统的不存在资源，没有释放的问题</td>
+        </tr>
+        <tr>
+          <td>自动生成性能报告</td>
+          <td>便捷的性能测试是系统调优的重要一环</td>
+        </tr>
+        <tr>
+          <td>系统能应对网络抖动</td>
+          <td>系统能应对脑裂问题</td>
+        </tr>
+        <tr>
+          <td>CI环境不需要专人维护</td>
+          <td>CI本身足够健壮；确保是开发人员来提供来提供回归测试</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<h2 id="-">充分测试后，线上还是经常会有惊喜</h2>
+<!-- Zabbix -->
+
+<h3 id="-">场景分析</h3>
+<ul>
+<li>通过Zabbix：持续对当前系统进行各类监测，记录系统健康状况的变化历史</li>
+</ul>
+<h3 id="1-">1. 问题描述</h3>
+<blockquote>
+<p>线下的各类检查都已经很充分了，为什么线上环境还是偶尔有各种各样让人夜不能寐的
+惊喜呢？</p>
+<p>将线上流量导入线下？</p>
+<p>监控可以帮助自动化发现问题，可是应该监控什么呢？
+除了监控，有哪写我们需要注意的地方，可以帮助进行故障的快速定位？</p>
+<p>当服务器越来越多时，当监控项越来越多时，还要人手工来配置监控项吗？</p>
+</blockquote>
+<h3 id="2-">2. 充足的监控</h3>
+<div class="row">
+  <div class="span8">
+    <table class="table table-bordered table-condensed">
+      <thead>
+        <th style="width: 35%">Item</th>
+        <th style="width: 15%">Category</th>
+        <th style="width: 50%">Summary</th>
+      </thead>
+      <tbody>
+        <tr>
+          <td>zabbix各类常规监控</td>
+          <td>系统监控</td>
+          <td>检测CPU，内存，IO，端口是否打开等等</td>
+        </tr>
+        <tr>
+          <td>检测相关服务的资源使用量</td>
+          <td>服务监控</td>
+          <td>内存的使用量，CPU使用量，打开的fd数，tcp的连接</td>
+        </tr>
+        <tr>
+          <td>服务的自检 sanityCheck</td>
+          <td>服务监控</td>
+          <td>服务的自我健康检查</td>
+        </tr>
+        <tr>
+          <td>检测依赖的服务</td>
+          <td>服务监控</td>
+          <td>例如消息队列的消息个数</td>
+        </tr>
+        <tr>
+          <td>监控数据的不一致</td>
+          <td>服务监控</td>
+          <td>分布式存储的一致性</td>
+        </tr>
+        <tr>
+          <td>对故障频发的关键业务进行监控</td>
+          <td>应用探针</td>
+          <td>验证系统的可用性</td>
+        </tr>
+        <tr>
+          <td>对关键服务进行性能监控</td>
+          <td>应用探针</td>
+          <td>验证系统的性能</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<h3 id="-">监控的注意事项</h3>
+<div class="row">
+  <div class="span8">
+    <table class="table table-bordered table-condensed">
+      <thead>
+        <th style="width: 40%">Item</th>
+        <th style="width: 60%">Comment</th>
+      </thead>
+      <tbody>
+        <tr>
+          <td>通过puppet自动更新zabbix的监控项</td>
+          <td>不同环境信息变化不同；方便zabbix实现对回归测试的支持</td>
+        </tr>
+        <tr>
+          <td>当监控失败时，记录重要的现场状况</td>
+          <td>上下文状态需要得以保存，以支持故障排查</td>
+        </tr>
+        <tr>
+          <td>统一的出错码</td>
+          <td>支持运维的故障确认和修复工作</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<h2 id="-">对于无法重现的用户抱怨，该怎么办</h2>
+<!-- Betternow -->
+
+<h3 id="-">场景分析</h3>
+<ul>
+<li>Web真实业务监控；当用户抱怨某个具体请求慢时，分析慢的具体原因</li>
+</ul>
+<h3 id="1-">1. 问题描述</h3>
+<blockquote>
+<p>我们线下测试已经足够充分，线上的监控已经做的足够细致，可是为什么用户还是会抱
+怨访问慢，或出现故障。</p>
+<p>具体的原因多种多样，更不幸的事，很多时候我们并不能重现这些问题。</p>
+<p>这个时候，我们除了摆笑脸外，还能干些什么？</p>
+<p>某个请求在不同处理阶段时，分别到了哪台服务器、那个服务呢？当时的执行情况是怎
+么样的呢？</p>
+</blockquote>
+<h3 id="2-web-">2. 基于网卡旁路监听的Web请求分析</h3>
+<ul>
+<li><p>Web 请求的统计图</p>
+</li>
+<li><p>Web 具体请求分析</p>
+</li>
+</ul>
+<h3 id="3-">3. 如何计算：服务器响应时间以及网络时间</h3>
+<h3 id="4-">4. 细化服务器的响应，以支持跟踪到每一个单独请求</h3>
+<ul>
+<li>针对具体请求的全局跟踪：能查到某一对象的修改，都是经过了哪些机器的哪些服务，
+及相应的处理时间和传递时间</li>
+</ul>
+<h2 id="-">如何针对分布式服务设计测试用例</h2>
+<!-- Test -->
+
+<h3 id="-">针对多实例</h3>
+<p>单点故障；服务漂移；数据同步</p>
+<h3 id="-">针对多租户</h3>
+<p>资源隔离；服务自我保护；请求异常断开</p>
+<h3 id="-">针对多依赖</h3>
+<p>随机重启；依赖关系；网络紊乱</p>
+<h3 id="-">其它</h3>
+<p>持续测试；性能测试；安全测试</p>
+<ul>
+<li>以分布式存储为例，具体分享一个完整的质量保障手段</li>
+</ul>
+<div class="row">
+  <div class="span8">
+    <table class="table table-bordered table-condensed">
+      <thead>
+        <th style="width: 15%">Item</th>
+        <th style="width: 50%">Summary</th>
+        <th style="width: 35%">Suggesion</th>
+      </thead>
+      <tbody>
+        <tr>
+          <td>单点故障</td>
+          <td>验证系统没有单点故障</td>
+          <td>随机重启</td>
+        </tr>
+        <tr>
+          <td>并发访问</td>
+          <td>基本功能测试</td>
+          <td>长时间，高并发的访问</td>
+        </tr>
+        <tr>
+          <td>持续测试</td>
+          <td>验证系统是否合理地做了资源回收</td>
+          <td>长时间，高并发测试</td>
+        </tr>
+        <tr>
+          <td>网络故障</td>
+          <td>模拟网络的短暂紊乱</td>
+          <td>通过动态修改防火墙规则来模拟</td>
+        </tr>
+        <tr>
+          <td>性能测试</td>
+          <td>得到可信的benchmark数据，为性能调优提供测试依据</td>
+          <td>长时间，高并发测试，并采集相应的指标值</td>
+        </tr>
+        <tr>
+          <td>错误注入</td>
+          <td>非法访问</td>
+          <td>读取不存在的对象，删除没有权限的对象等</td>
+        </tr>
+        <tr>
+          <td>数据同步</td>
+          <td>能跟踪某一个具体对象的状态</td>
+          <td>验证某个对象的一致性状态</td>
+        </tr>
+        <tr>
+          <td>服务自保护</td>
+          <td>worker超时；孤儿进程</td>
+          <td>验证相关进程的状态</td>
+        </tr>
+        <tr>
+          <td>服务漂移</td>
+          <td>水平扩展的系统，任何一个服务实例down了系统还是可用的</td>
+          <td>随机重启</td>
+        </tr>
+        <tr>
+          <td>服务的负载均衡</td>
+          <td>对等的服务实例，不应该有过度的冷热之分</td>
+          <td>针对两个不同对象，做并发的持续性修改</td>
+        </tr>
+        <tr>
+          <td>运维是做请求</td>
+          <td>运维时，是系统虚弱的时候</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>请求中断</td>
+          <td>请求服务被客户端在任意时间点异常中断</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>依赖关系</td>
+          <td>当服务实例的依赖出现问题时，服务的行为是可控的</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>资源隔离</td>
+          <td>应对多租户请求时，任务之间互补干扰</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>极限测试</td>
+          <td>在系统可用资源比较低的情况进行测试</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>安全测试</td>
+          <td>与安全相关的测试</td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/shopex/">shopex</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/shopex/">shopex</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://weibo.com/370377010/2014/02/19/2013-04-12-how_to_test_paas_platform/" data-title="如何测试pass平台 | WITWICKY" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2014/02/15/hello-world/"  title="Hello World">
+ <strong>NEXT:</strong><br/> 
+ <span>Hello World
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#-"><span class="toc-number">1.</span> <span class="toc-text">如何快速发现问题和缩小排查范围</span></a></li><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#-"><span class="toc-number">1.1.</span> <span class="toc-text">场景分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-"><span class="toc-number">1.2.</span> <span class="toc-text">1. 问题描述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-"><span class="toc-number">1.3.</span> <span class="toc-text">2. 每个服务尽可能的自我检查，报告健康状态</span></a></li><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#sanitycheck-"><span class="toc-number">1.3.1.</span> <span class="toc-text">sanityCheck的难点：</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#sanitycheck-"><span class="toc-number">1.3.2.</span> <span class="toc-text">sanityCheck的主要内容：</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#sanitycheck-"><span class="toc-number">1.3.3.</span> <span class="toc-text">sanityCheck的注意事项：</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#-"><span class="toc-number">1.3.4.</span> <span class="toc-text">最重要一点：</span></a></li></ol><li class="toc-item toc-level-3"><a class="toc-link" href="#3-"><span class="toc-number">1.4.</span> <span class="toc-text">3. 通过统一规范来管理服务</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-syslog-ng-log-"><span class="toc-number">1.5.</span> <span class="toc-text">4. 服务通过向 syslog-ng 记log，就可以自动发邮件报警了</span></a></li></ol><li class="toc-item toc-level-2"><a class="toc-link" href="#-"><span class="toc-number">2.</span> <span class="toc-text">线下如何尽可能多的发现问题</span></a></li><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#-"><span class="toc-number">2.1.</span> <span class="toc-text">场景分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-"><span class="toc-number">2.2.</span> <span class="toc-text">1. 问题描述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-ecae-hudson-"><span class="toc-number">2.3.</span> <span class="toc-text">2. ECAE的Hudson任务图</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-"><span class="toc-number">2.4.</span> <span class="toc-text">3. 里程碑</span></a></li></ol><li class="toc-item toc-level-2"><a class="toc-link" href="#-"><span class="toc-number">3.</span> <span class="toc-text">充分测试后，线上还是经常会有惊喜</span></a></li><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#-"><span class="toc-number">3.1.</span> <span class="toc-text">场景分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-"><span class="toc-number">3.2.</span> <span class="toc-text">1. 问题描述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-"><span class="toc-number">3.3.</span> <span class="toc-text">2. 充足的监控</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#-"><span class="toc-number">3.4.</span> <span class="toc-text">监控的注意事项</span></a></li></ol><li class="toc-item toc-level-2"><a class="toc-link" href="#-"><span class="toc-number">4.</span> <span class="toc-text">对于无法重现的用户抱怨，该怎么办</span></a></li><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#-"><span class="toc-number">4.1.</span> <span class="toc-text">场景分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-"><span class="toc-number">4.2.</span> <span class="toc-text">1. 问题描述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-web-"><span class="toc-number">4.3.</span> <span class="toc-text">2. 基于网卡旁路监听的Web请求分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-"><span class="toc-number">4.4.</span> <span class="toc-text">3. 如何计算：服务器响应时间以及网络时间</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-"><span class="toc-number">4.5.</span> <span class="toc-text">4. 细化服务器的响应，以支持跟踪到每一个单独请求</span></a></li></ol><li class="toc-item toc-level-2"><a class="toc-link" href="#-"><span class="toc-number">5.</span> <span class="toc-text">如何针对分布式服务设计测试用例</span></a></li><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#-"><span class="toc-number">5.1.</span> <span class="toc-text">针对多实例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#-"><span class="toc-number">5.2.</span> <span class="toc-text">针对多租户</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#-"><span class="toc-number">5.3.</span> <span class="toc-text">针对多依赖</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#-"><span class="toc-number">5.4.</span> <span class="toc-text">其它</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">Categories</p>
+		<ul>
+		
+			<li><a href="/categories/shopex/" title="shopex">shopex<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">Tags</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/shopex/" title="shopex">shopex<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="rsspart">
+	<a href="null" target="_blank" title="rss">RSS</a>
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<section class="info">
+		<p> Hello! I&#39;m Xiaoxiao at QINIU. <br/>
+			This is my blog, Believe it or not.</p>
+	</section>
+	 
+	<div class="social-font" class="clearfix">
+		
+		<a href="http://weibo.com/370377010" target="_blank" title="weibo"></a>
+		
+		
+		<a href="https://twitter.com/boponik" target="_blank" title="twitter"></a>
+		
+		
+		<a href="https://github.com/witwicky" target="_blank" title="github"></a>
+		
+		
+		<a href="https://www.facebook.com/boponik" target="_blank" title="facebook"></a>
+		
+	</div>
+		<p class="copyright">Powered by <a href="http://zespia.tw/hexo/" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/A-limon/pacman" target="_blank" title="Pacman">Pacman</a> © 2014 
+		
+		<a href="http://weibo.com/370377010" target="_blank" title="xiaoxiao">xiaoxiao</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+  </body>
+</html>
